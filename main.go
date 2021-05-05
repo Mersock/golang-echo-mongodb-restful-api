@@ -9,6 +9,7 @@ import (
 	"github.com/Mersock/golang-echo-mongodb-restful-api/handlers"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -40,6 +41,7 @@ func init() {
 func main() {
 	e := echo.New()
 	h := handlers.ProductHandlers{Col: col}
+	e.Pre(middleware.RemoveTrailingSlash())
 
 	e.POST("/products", h.CreateProducts)
 
