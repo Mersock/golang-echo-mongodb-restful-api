@@ -24,7 +24,7 @@ func init() {
 
 func main() {
 	e := echo.New()
-	col := db.New()
+	col := db.New(cfg)
 	h := handlers.ProductHandlers{Col: col}
 
 	e.Pre(middleware.RemoveTrailingSlash())
