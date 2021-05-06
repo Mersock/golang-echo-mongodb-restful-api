@@ -7,6 +7,7 @@ type Properties struct {
 	DBHost         string `env:"DB_HOST" env-default:"localhost"`
 	DBPort         string `env:"DB_PORT" env-default:"27017"`
 	DBName         string `env:"DB_NAME" env-default:"tronics"`
+	DBTestName     string `env:"DB_TEST_NAME" env-default:"tronics_test"`
 	DBUser         string `env:"DB_USER" env-default:"root"`
 	DBPass         string `env:"DB_PASS" env-default:"123456"`
 	CollectionName string `env:"COLLECTION_NAME" env-default:"products"`
