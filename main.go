@@ -29,7 +29,7 @@ func main() {
 
 	e.Pre(middleware.RemoveTrailingSlash())
 
-	e.POST("/products", h.CreateProducts)
+	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M"))
 
 	e.Logger.Infof("Listening on %s", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
