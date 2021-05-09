@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  app:
+    container_name: golang-echo-app-test
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - .:/app
+    depends_on:
+      - mongo
+    networks:
+      - echo-mongodb-api-test
+  mongo:
+    image: mongo:4.4.3
+    container_name: golang-echo-db-test
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+    ports:
+      - "27018:27017"
+    networks:
+      - echo-mongodb-api-test
+
+networks:
+  echo-mongodb-api-test:
+    name: echo-mongodb-api-test
+    driver: bridge

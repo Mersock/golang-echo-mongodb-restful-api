@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Mersock/golang-echo-mongodb-restful-api/config"
+	"github.com/Mersock/golang-echo-mongodb-restful-api/db"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +24,7 @@ func init() {
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("Configuration cannot be read : %v", err)
 	}
+	col = db.New(cfg)
 }
 
 func TestProduct(t *testing.T) {
