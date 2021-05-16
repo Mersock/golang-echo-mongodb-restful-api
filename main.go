@@ -10,15 +10,33 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/random"
 )
 
 var (
-	cfg config.Properties
+	cfg           config.Properties
+	CorrelationID = "X-Correlation-id"
 )
 
 func init() {
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("Configuration cannot be read : %v", err)
+	}
+}
+
+func addCorrelationID(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := c.Request().Header.Get(CorrelationID)
+		var newID string
+		if id == "" {
+			newID = random.String(12)
+
+		} else {
+			newID = id
+		}
+		c.Request().Header.Set(CorrelationID, newID)
+		c.Response().Header().Set(CorrelationID, newID)
+		return next(c)
 	}
 }
 
@@ -28,6 +46,7 @@ func main() {
 	h := handlers.ProductHandlers{Col: col}
 
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.Pre(addCorrelationID)
 
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M"))
 
