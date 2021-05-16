@@ -15,7 +15,7 @@ import (
 
 var (
 	cfg           config.Properties
-	CorrelationID = "X-Correlation-id"
+	CorrelationID = "X-Correlation-ID"
 )
 
 func init() {
