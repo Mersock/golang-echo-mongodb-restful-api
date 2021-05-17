@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/Mersock/golang-echo-mongodb-restful-api/dbiface"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -38,13 +39,34 @@ func (p *ProductValidator) Validate(i interface{}) error {
 	return p.validator.Struct(i)
 }
 
+func findProducts(ctx context.Context, collection dbiface.CollectionAPI) ([]Product, error) {
+	var product []Product
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		log.Errorf("Unable to find the product :%v", err)
+	}
+	err = cursor.All(ctx, &product)
+	if err != nil {
+		log.Errorf("Unable to read the cursor :%v", err)
+	}
+	return product, nil
+}
+
+func (h *ProductHandlers) GetProducts(c echo.Context) error {
+	products, err := findProducts(context.Background(), h.Col)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, products)
+}
+
 func insertProducts(ctx context.Context, products []Product, collection dbiface.CollectionAPI) ([]interface{}, error) {
 	var insertIds []interface{}
 	for _, product := range products {
 		product.ID = primitive.NewObjectID()
 		insertID, err := collection.InsertOne(ctx, product)
 		if err != nil {
-			log.Printf("Unable to insert :%v", err)
+			log.Errorf("Unable to insert :%v", err)
 			return nil, err
 		}
 		insertIds = append(insertIds, insertID.InsertedID)
@@ -57,13 +79,13 @@ func (h *ProductHandlers) CreateProducts(c echo.Context) error {
 	c.Echo().Validator = &ProductValidator{validator: v}
 
 	if err := c.Bind(&products); err != nil {
-		log.Printf("Unable to bind: %v", err)
+		log.Errorf("Unable to bind: %v", err)
 		return err
 	}
 
 	for _, product := range products {
 		if err := c.Validate(product); err != nil {
-			log.Printf("Unable to validate the product %v %+v", product, err)
+			log.Errorf("Unable to validate the product %v %+v", product, err)
 			return err
 		}
 
