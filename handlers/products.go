@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/Mersock/golang-echo-mongodb-restful-api/dbiface"
 	"github.com/go-playground/validator/v10"
@@ -39,21 +40,30 @@ func (p *ProductValidator) Validate(i interface{}) error {
 	return p.validator.Struct(i)
 }
 
-func findProducts(ctx context.Context, collection dbiface.CollectionAPI) ([]Product, error) {
+func findProducts(ctx context.Context, q url.Values, collection dbiface.CollectionAPI) ([]Product, error) {
 	var product []Product
-	cursor, err := collection.Find(ctx, bson.M{})
+	filter := make(map[string]interface{})
+
+	for k, v := range q {
+		filter[k] = v[0]
+	}
+
+	cursor, err := collection.Find(ctx, bson.M(filter))
+
 	if err != nil {
 		log.Errorf("Unable to find the product :%v", err)
 	}
+
 	err = cursor.All(ctx, &product)
 	if err != nil {
 		log.Errorf("Unable to read the cursor :%v", err)
 	}
+
 	return product, nil
 }
 
 func (h *ProductHandlers) GetProducts(c echo.Context) error {
-	products, err := findProducts(context.Background(), h.Col)
+	products, err := findProducts(context.Background(), c.QueryParams(), h.Col)
 	if err != nil {
 		return err
 	}
