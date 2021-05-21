@@ -164,3 +164,50 @@ func (h *ProductHandlers) UpdateProducts(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, product)
 }
+
+func findProduct(ctx context.Context, id string, collection dbiface.CollectionAPI) (Product, error) {
+	var product Product
+	docId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Errorf("Unable to find product: %v", err)
+		return product, err
+	}
+	res := collection.FindOne(ctx, bson.M{"_id": docId})
+	err = res.Decode(&product)
+	if err != nil {
+		log.Errorf("Unable to decode product: %v", err)
+		return product, err
+
+	}
+	return product, nil
+}
+
+func (h *ProductHandlers) GetProduct(c echo.Context) error {
+	products, err := findProduct(context.Background(), c.Param("id"), h.Col)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, products)
+}
+
+func deleteProduct(ctx context.Context, id string, collection dbiface.CollectionAPI) (int64, error) {
+	docId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Errorf("Unable convert to ObjectID :%v", err)
+		return 0, err
+	}
+	res, err := collection.DeleteOne(ctx, bson.M{"_id": docId})
+	if err != nil {
+		log.Errorf("Unable to delete the product :%v", err)
+		return 0, err
+	}
+	return res.DeletedCount, nil
+}
+
+func (h *ProductHandlers) DeleteProduct(c echo.Context) error {
+	delCount, err := deleteProduct(context.Background(), c.Param("id"), h.Col)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, delCount)
+}

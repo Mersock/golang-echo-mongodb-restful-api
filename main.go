@@ -48,9 +48,11 @@ func main() {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(addCorrelationID)
 
+	e.GET("/products/:id", h.GetProduct)
 	e.PUT("/products/:id", h.UpdateProducts, middleware.BodyLimit("1M"))
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M"))
 	e.GET("/products", h.GetProducts)
+	e.DELETE("/products/:id", h.DeleteProduct)
 
 	e.Logger.Infof("Listening on %s", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
