@@ -125,25 +125,31 @@ func modifyProduct(ctx context.Context, id string, reqBody io.ReadCloser, collec
 	var product Product
 	docId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+		log.Errorf("Can not covert to objectId: %v", err)
+
 		return product, err
 	}
 	filter := bson.M{"_id": docId}
 	res := collection.FindOne(ctx, filter)
 	if err := res.Decode(&product); err != nil {
+		log.Errorf("Unable to decode to product: %v", err)
 		return product, err
 	}
 
 	if err := json.NewDecoder(reqBody).Decode(&product); err != nil {
+		log.Errorf("Unable to decode to reqBody: %v", err)
 		return product, err
 	}
 
 	if err := v.Struct(product); err != nil {
+		log.Errorf("Unable to validatge of struct: %v", err)
 		return product, err
 	}
 
 	_, err = collection.UpdateOne(ctx, filter, bson.M{"$set": product})
 
 	if err != nil {
+		log.Errorf("Unable to update product: %v", err)
 		return product, err
 	}
 
