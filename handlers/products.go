@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -48,8 +50,8 @@ func findProducts(ctx context.Context, q url.Values, collection dbiface.Collecti
 		filter[k] = v[0]
 	}
 
-	if filter["_id"] != "" {
-		docID, err := primitive.ObjectIDFromHex(filter["_id"].(string))
+	if id, ok := filter["_id"]; ok {
+		docID, err := primitive.ObjectIDFromHex(id.(string))
 		if err != nil {
 			return products, err
 		}
@@ -117,4 +119,42 @@ func (h *ProductHandlers) CreateProducts(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, IDs)
+}
+
+func modifyProduct(ctx context.Context, id string, reqBody io.ReadCloser, collection dbiface.CollectionAPI) (Product, error) {
+	var product Product
+	docId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return product, err
+	}
+	filter := bson.M{"_id": docId}
+	res := collection.FindOne(ctx, filter)
+	if err := res.Decode(&product); err != nil {
+		return product, err
+	}
+
+	if err := json.NewDecoder(reqBody).Decode(&product); err != nil {
+		return product, err
+	}
+
+	if err := v.Struct(product); err != nil {
+		return product, err
+	}
+
+	_, err = collection.UpdateOne(ctx, filter, bson.M{"$set": product})
+
+	if err != nil {
+		return product, err
+	}
+
+	return product, nil
+}
+
+func (h *ProductHandlers) UpdateProducts(c echo.Context) error {
+	var product Product
+	product, err := modifyProduct(context.Background(), c.Param("id"), c.Request().Body, h.Col)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, product)
 }
