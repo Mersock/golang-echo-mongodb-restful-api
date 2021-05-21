@@ -41,25 +41,35 @@ func (p *ProductValidator) Validate(i interface{}) error {
 }
 
 func findProducts(ctx context.Context, q url.Values, collection dbiface.CollectionAPI) ([]Product, error) {
-	var product []Product
+	var products []Product
 	filter := make(map[string]interface{})
 
 	for k, v := range q {
 		filter[k] = v[0]
 	}
 
+	if filter["_id"] != "" {
+		docID, err := primitive.ObjectIDFromHex(filter["_id"].(string))
+		if err != nil {
+			return products, err
+		}
+		filter["_id"] = docID
+	}
+
 	cursor, err := collection.Find(ctx, bson.M(filter))
 
 	if err != nil {
 		log.Errorf("Unable to find the product :%v", err)
+		return products, err
 	}
 
-	err = cursor.All(ctx, &product)
+	err = cursor.All(ctx, &products)
 	if err != nil {
 		log.Errorf("Unable to read the cursor :%v", err)
+		return products, err
 	}
 
-	return product, nil
+	return products, nil
 }
 
 func (h *ProductHandlers) GetProducts(c echo.Context) error {
