@@ -11,9 +11,12 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/labstack/gommon/random"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var (
+	mainDB        *mongo.Database
+	productCol    *mongo.Collection
 	cfg           config.Properties
 	CorrelationID = "X-Correlation-ID"
 )
@@ -22,6 +25,8 @@ func init() {
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("Configuration cannot be read : %v", err)
 	}
+	mainDB = db.New(cfg)
+	productCol = mainDB.Collection(cfg.CollectionName)
 }
 
 func addCorrelationID(next echo.HandlerFunc) echo.HandlerFunc {
@@ -50,8 +55,7 @@ func main() {
 			`${status} ${error} ${latency_human}` + "\n",
 	}))
 
-	col := db.New(cfg)
-	h := handlers.ProductHandlers{Col: col}
+	h := handlers.ProductHandlers{Col: productCol}
 	e.GET("/products/:id", h.GetProduct)
 	e.PUT("/products/:id", h.UpdateProducts, middleware.BodyLimit("1M"))
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M"))
