@@ -46,7 +46,7 @@ func main() {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(addCorrelationID)
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: `${time_rfc3339_nano} ${remote_ip} ${host} ${method} ${uri} ${user_agent} ` +
+		Format: `${time_rfc3339_nano} ${remote_ip} ${header:X-Correlation-ID} ${host} ${method} ${uri} ${user_agent} ` +
 			`${status} ${error} ${latency_human}` + "\n",
 	}))
 
