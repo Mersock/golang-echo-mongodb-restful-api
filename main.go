@@ -26,7 +26,7 @@ func init() {
 		log.Fatalf("Configuration cannot be read : %v", err)
 	}
 	mainDB = db.New(cfg)
-	productCol = mainDB.Collection(cfg.CollectionName)
+	productCol = mainDB.Collection(cfg.ProductCollection)
 }
 
 func addCorrelationID(next echo.HandlerFunc) echo.HandlerFunc {

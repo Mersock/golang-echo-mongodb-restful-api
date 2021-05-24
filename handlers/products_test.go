@@ -30,7 +30,7 @@ func init() {
 		log.Fatalf("Configuration cannot be read : %v", err)
 	}
 	mainDB = db.New(cfg)
-	col = mainDB.Collection(cfg.CollectionName)
+	col = mainDB.Collection(cfg.ProductCollection)
 }
 
 func TestMain(m *testing.M) {
