@@ -19,16 +19,18 @@ import (
 )
 
 var (
-	cfg config.Properties
-	h   ProductHandlers
-	col *mongo.Collection
+	cfg    config.Properties
+	h      ProductHandlers
+	col    *mongo.Collection
+	mainDB *mongo.Database
 )
 
 func init() {
 	if err := cleanenv.ReadEnv(&cfg); err != nil {
 		log.Fatalf("Configuration cannot be read : %v", err)
 	}
-	col = db.New(cfg)
+	mainDB = db.New(cfg)
+	col = mainDB.Collection(cfg.CollectionName)
 }
 
 func TestMain(m *testing.M) {
