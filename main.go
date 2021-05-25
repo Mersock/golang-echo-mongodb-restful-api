@@ -35,7 +35,7 @@ func init() {
 
 	isUserIndexUnique := true
 	indexModel := mongo.IndexModel{
-		Keys: bson.D{{"username", 1}},
+		Keys: bson.M{"username": 1},
 		Options: &options.IndexOptions{
 			Unique: &isUserIndexUnique,
 		},
