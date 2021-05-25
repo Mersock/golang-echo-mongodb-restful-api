@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Mersock/golang-echo-mongodb-restful-api/config"
@@ -11,12 +12,15 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/labstack/gommon/random"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
 	mainDB        *mongo.Database
-	productCol    *mongo.Collection
+	productsCol   *mongo.Collection
+	usersCol      *mongo.Collection
 	cfg           config.Properties
 	CorrelationID = "X-Correlation-ID"
 )
@@ -26,7 +30,20 @@ func init() {
 		log.Fatalf("Configuration cannot be read : %v", err)
 	}
 	mainDB = db.New(cfg)
-	productCol = mainDB.Collection(cfg.ProductCollection)
+	productsCol = mainDB.Collection(cfg.ProductCollection)
+	usersCol = mainDB.Collection(cfg.UserCollection)
+
+	isUserIndexUnique := true
+	indexModel := mongo.IndexModel{
+		Keys: bson.D{{"username", 1}},
+		Options: &options.IndexOptions{
+			Unique: &isUserIndexUnique,
+		},
+	}
+	_, err := usersCol.Indexes().CreateOne(context.Background(), indexModel)
+	if err != nil {
+		log.Fatalf("Unable to create an index : %+v", err)
+	}
 }
 
 func addCorrelationID(next echo.HandlerFunc) echo.HandlerFunc {
@@ -55,13 +72,15 @@ func main() {
 			`${status} ${error} ${latency_human}` + "\n",
 	}))
 
-	h := handlers.ProductHandlers{Col: productCol}
+	h := &handlers.ProductHandlers{Col: productsCol}
 	e.GET("/products/:id", h.GetProduct)
 	e.PUT("/products/:id", h.UpdateProducts, middleware.BodyLimit("1M"))
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M"))
 	e.GET("/products", h.GetProducts)
 	e.DELETE("/products/:id", h.DeleteProduct)
 
+	uh := handlers.UsersHandler{Col: usersCol}
+	e.POST("/users", uh.CreateUser)
 	e.Logger.Infof("Listening on %s", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
 }
