@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.38.31 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-playground/validator/v10 v10.5.0 // indirect
 	github.com/ilyakaznacheev/cleanenv v1.2.5 // indirect
 	github.com/klauspost/compress v1.12.2 // indirect
