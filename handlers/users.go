@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -41,6 +42,13 @@ func insertUser(ctx context.Context, user User, collection dbiface.CollectionAPI
 		log.Errorf("User by %s already exists", user.Email)
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "User already exists")
 	}
+
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+	if err != nil {
+		log.Errorf("Unable to hash the password: %v", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Unable to process the password")
+	}
+	user.Password = string(hashPassword)
 	insertRes, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		log.Errorf("Unable to insert the user :%+v", err)
@@ -65,4 +73,8 @@ func (h *UsersHandler) CreateUser(c echo.Context) error {
 		return err
 	}
 	return c.JSON(http.StatusCreated, insertedUserID)
+}
+
+func (h *UsersHandler) AuthUser(c echo.Context) {
+
 }
