@@ -96,11 +96,11 @@ func authenticateUser(ctx context.Context, reqUser User, collection dbiface.Coll
 	err := res.Decode(&storedUser)
 	if err != nil {
 		log.Errorf("Unable to decode retrieved user: %v", err)
-		return storedUser, echo.NewHTTPError(http.StatusBadRequest, "Unable to decode retreved user")
+		return storedUser, echo.NewHTTPError(http.StatusUnauthorized, "Credentials invalid")
 	}
 	if err == mongo.ErrNoDocuments {
 		log.Errorf("user %s does not exist", reqUser.Email)
-		return storedUser, echo.NewHTTPError(http.StatusNotFound, "User does not exist")
+		return storedUser, echo.NewHTTPError(http.StatusUnauthorized, "Credentials invalid")
 	}
 	if !isCredValid(reqUser.Password, storedUser.Password) {
 		return storedUser, echo.NewHTTPError(http.StatusUnauthorized, "Credentials invalid")
