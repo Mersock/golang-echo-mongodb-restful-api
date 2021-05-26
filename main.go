@@ -81,6 +81,8 @@ func main() {
 
 	uh := handlers.UsersHandler{Col: usersCol}
 	e.POST("/users", uh.CreateUser)
+	e.POST("/auth", uh.AuthUser)
+
 	e.Logger.Infof("Listening on %s", cfg.Port)
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", cfg.Port)))
 }
