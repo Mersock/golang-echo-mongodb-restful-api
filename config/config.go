@@ -4,7 +4,7 @@ package config
 type Properties struct {
 	Port              string `env:"APP_PORT" env-default:"8080"`
 	Host              string `env:"APP_HOST" env-default:"localhost"`
-	DBHost            string `env:"DB_HOST" env-default:"localhost"`
+	DBHost            string `env:"DB_HOST" env-default:"mongo"`
 	DBPort            string `env:"DB_PORT" env-default:"27017"`
 	DBName            string `env:"DB_NAME" env-default:"tronics"`
 	DBTestName        string `env:"DB_TEST_NAME" env-default:"tronics_test"`
