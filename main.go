@@ -3,10 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/Mersock/golang-echo-mongodb-restful-api/config"
 	"github.com/Mersock/golang-echo-mongodb-restful-api/db"
 	"github.com/Mersock/golang-echo-mongodb-restful-api/handlers"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -62,6 +65,25 @@ func addCorrelationID(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func adminMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		headerToken := c.Request().Header.Get("x-auth-token")
+		token := strings.Split(headerToken, " ")[1]
+		claims := jwt.MapClaims{}
+		_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
+			return []byte(cfg.JwtTokenSecret), nil
+		})
+		if err != nil {
+			log.Errorf("Unable to parse token : %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse token")
+		}
+		if !claims["authorized"].(bool) {
+			return echo.NewHTTPError(http.StatusForbidden, "Not authorized")
+		}
+		return next(c)
+	}
+}
+
 func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
@@ -81,7 +103,7 @@ func main() {
 	e.PUT("/products/:id", h.UpdateProducts, middleware.BodyLimit("1M"), jwtMiddleware)
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M"), jwtMiddleware)
 	e.GET("/products", h.GetProducts)
-	e.DELETE("/products/:id", h.DeleteProduct, jwtMiddleware)
+	e.DELETE("/products/:id", h.DeleteProduct, jwtMiddleware, adminMiddleware)
 
 	uh := handlers.UsersHandler{Col: usersCol}
 	e.POST("/users", uh.CreateUser)

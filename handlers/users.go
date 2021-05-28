@@ -24,6 +24,7 @@ var (
 type User struct {
 	Email    string `json:"username" bson:"username" validate:"required,email"`
 	Password string `json:"password,omitempty" bson:"password" validate:"required,min=8,max=300"`
+	IsAdmin  bool   `json:"isAdmin,omitempty" bson:"isAdmin"`
 }
 
 type UsersHandler struct {
@@ -80,7 +81,7 @@ func (h *UsersHandler) CreateUser(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	token, err := createToken(user.Email)
+	token, err := user.createToken()
 	if err != nil {
 		log.Errorf("Unable to generate the token")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Unable to generate the token")
@@ -111,16 +112,16 @@ func authenticateUser(ctx context.Context, reqUser User, collection dbiface.Coll
 	if !isCredValid(reqUser.Password, storedUser.Password) {
 		return storedUser, echo.NewHTTPError(http.StatusUnauthorized, "Credentials invalid")
 	}
-	return User{Email: storedUser.Email}, nil
+	return storedUser, nil
 }
 
-func createToken(username string) (string, *echo.HTTPError) {
+func (u User) createToken() (string, *echo.HTTPError) {
 	if err := cleanenv.ReadEnv(&cf); err != nil {
 		log.Fatalf("Configuration cannot be read :%v", err)
 	}
 	claims := jwt.MapClaims{}
-	claims["authorized"] = true
-	claims["user_id"] = username
+	claims["authorized"] = u.IsAdmin
+	claims["user_id"] = u.Email
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err := at.SignedString([]byte(cf.JwtTokenSecret))
@@ -147,7 +148,7 @@ func (h *UsersHandler) AuthUser(c echo.Context) error {
 		log.Errorf("Unable to authenticate to database")
 		return err
 	}
-	token, err := createToken(user.Email)
+	token, err := user.createToken()
 	if err != nil {
 		log.Errorf("Unable to genarate the token")
 		return err
