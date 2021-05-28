@@ -11,7 +11,7 @@ import (
 )
 
 func New(cfg config.Properties) *mongo.Database {
-	connURI := fmt.Sprintf("mongodb://%s:%s@mongo/?authSource=admin", cfg.DBUser, cfg.DBPass)
+	connURI := fmt.Sprintf("mongodb://%s:%s@%s:%s/?authSource=admin", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort)
 
 	c, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connURI))
 
@@ -25,7 +25,7 @@ func New(cfg config.Properties) *mongo.Database {
 }
 
 func NewTest(cfg config.Properties) *mongo.Database {
-	connURI := fmt.Sprintf("mongodb://%s:%s@mongo/?authSource=admin", cfg.DBUser, cfg.DBPass)
+	connURI := fmt.Sprintf("mongodb://%s:%s@%s:%s/?authSource=admin", cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort)
 
 	c, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connURI))
 
