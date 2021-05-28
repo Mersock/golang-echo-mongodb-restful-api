@@ -3,40 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/Mersock/golang-echo-mongodb-restful-api/config"
-	"github.com/Mersock/golang-echo-mongodb-restful-api/db"
-	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-var (
-	cfg    config.Properties
-	h      ProductHandlers
-	col    *mongo.Collection
-	mainDB *mongo.Database
-)
-
-func init() {
-	if err := cleanenv.ReadEnv(&cfg); err != nil {
-		log.Fatalf("Configuration cannot be read : %v", err)
-	}
-	mainDB = db.New(cfg)
-	col = mainDB.Collection(cfg.ProductCollection)
-}
-
-func TestMain(m *testing.M) {
-	testCode := m.Run()
-	os.Exit(testCode)
-}
 
 func TestProduct(t *testing.T) {
 	var docID string
@@ -57,7 +31,7 @@ func TestProduct(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		e := echo.New()
 		c := e.NewContext(req, res)
-		h.Col = col
+		h.Col = productCol
 		err := h.CreateProducts(c)
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusCreated, res.Code)
@@ -78,7 +52,7 @@ func TestProduct(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		e := echo.New()
 		c := e.NewContext(req, res)
-		h.Col = col
+		h.Col = productCol
 		test := h.GetProducts(c)
 		assert.Nil(t, test)
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -97,7 +71,7 @@ func TestProduct(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		e := echo.New()
 		c := e.NewContext(req, res)
-		h.Col = col
+		h.Col = productCol
 		test := h.GetProducts(c)
 		assert.Nil(t, test)
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -118,7 +92,7 @@ func TestProduct(t *testing.T) {
 		c := e.NewContext(req, res)
 		c.SetParamNames("id")
 		c.SetParamValues(docID)
-		h.Col = col
+		h.Col = productCol
 		test := h.GetProduct(c)
 		assert.Nil(t, test)
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -147,7 +121,7 @@ func TestProduct(t *testing.T) {
 		c := e.NewContext(req, res)
 		c.SetParamNames("id")
 		c.SetParamValues(docID)
-		h.Col = col
+		h.Col = productCol
 		test := h.UpdateProducts(c)
 		assert.Nil(t, test)
 		assert.Equal(t, http.StatusOK, res.Code)
@@ -166,7 +140,7 @@ func TestProduct(t *testing.T) {
 		c := e.NewContext(req, res)
 		c.SetParamNames("id")
 		c.SetParamValues(docID)
-		h.Col = col
+		h.Col = productCol
 		test := h.DeleteProduct(c)
 		assert.Nil(t, test)
 		assert.Equal(t, http.StatusOK, res.Code)
