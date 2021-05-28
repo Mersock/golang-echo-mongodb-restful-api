@@ -24,9 +24,16 @@ func New(cfg config.Properties) *mongo.Database {
 	return db
 }
 
-func DropTestDB(col mongo.Collection) error {
-	if err := col.Database().Drop(context.Background()); err != nil {
-		return err
+func NewTest(cfg config.Properties) *mongo.Database {
+	connURI := fmt.Sprintf("mongodb://%s:%s@mongo/?authSource=admin", cfg.DBUser, cfg.DBPass)
+
+	c, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connURI))
+
+	if err != nil {
+		log.Fatalf("Unable to conntect to database : %s", err)
 	}
-	return nil
+
+	db := c.Database(cfg.DBTestName)
+
+	return db
 }
