@@ -1,0 +1,37 @@
+###
+FROM golang:1.16-alpine as builder
+
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+COPY . .
+
+RUN go build -o main .
+
+###
+FROM scratch
+
+ARG APP_PORT
+ARG DB_HOST
+ARG DB_PORT
+ARG JWT_TOKEN_SECRET
+
+ENV APP_PORT=${APP_PORT}
+ENV DB_HOST=${DB_HOST}
+ENV DB_PORT=${DB_PORT}
+ENV JWT_TOKEN_SECRET=${JWT_TOKEN_SECRET}}
+
+COPY --from=builder /app/main /
+
+EXPOSE 8080
+
+ENTRYPOINT ["/main"]
